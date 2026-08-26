@@ -6,11 +6,12 @@ namespace MiniProject_Working1.Models;
 
 public interface IListUiInterface // will hopefully make transition to MAUI or other target easier
 {
-    public List<TaskObject> SelectedList { get; set; }
-    public TaskObject SelectedTask { get; set; }
-    public ViewStatus ViewMode { get; set; }
+    public List<TaskObject> SelectedList { get; set; } // may not be required, but helped me
+    public TaskObject SelectedTask { get; set; } // may not be required, but helped me
+    public ViewStatus ViewMode { get; set; } // may not be required, but helped me
 
-    public void ShowSplash(string text);
+    public void Start();
+    public void ShowSplash();
     public void ShowHeader(string text);
     public void ShowLists(List<ListObject> lists);
     public void ShowItems(List<TaskObject> tasks);
@@ -62,12 +63,3 @@ public enum ListUiCommand
     TaskMoveDown,
     TaskDelete
 };
-
-
-
-//AnsiConsole.Cursor.Show();
-//Console.SetCursorPosition(0, (maxRowReached* 2) + 3);
-//Console.SetCursorPosition(branchX, screenRow + 1);
-//AnsiConsole.Markup("[yellow]\\[/]")
-//AnsiConsole.Cursor.Hide();
-//int maxRowReached = 0;

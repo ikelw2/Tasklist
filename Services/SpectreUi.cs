@@ -1,5 +1,9 @@
 ﻿using MiniProject_Working1.Models;
+
 using Spectre.Console;
+using Spectre.Console.Rendering;
+using System.Threading;
+
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -8,53 +12,190 @@ namespace MiniProject_Working1.Services;
 
 internal class SpectreUi : IListUiInterface
 {
+    private ListContainer _lc;
     public List<TaskObject> SelectedList { get; set; }
     public TaskObject SelectedTask { get; set; }
     public ViewStatus ViewMode { get; set; }
 
-    
-    public void ShowSplash(string text) 
-    { 
-    
+    public Table ViewTable { get; set; } = new Table();
+    public int ViewTotalColumns { get; set; }
+    public int ViewTotalRows { get; set; }
+
+
+
+    public SpectreUi(ListContainer listContainer)
+    {
+        _lc = listContainer;
     }
+    //------------------------------------
     
+
+    //AnsiConsole.Cursor.Show();
+    //Console.SetCursorPosition(0, (maxRowReached* 2) + 3);
+    //Console.SetCursorPosition(branchX, screenRow + 1);
+    //AnsiConsole.Markup("[yellow]\\[/]")
+    //AnsiConsole.Cursor.Hide();
+    //int maxRowReached = 0;
+    //------------------------------------
+    public void Start()
+    {
+        ShowSplash();
+
+        ConsoleKeyInfo keyInfo;
+
+        // main loop
+        do
+        {
+            
+            
+            // show header
+            // show container or individual list
+            // show options
+
+
+            Console.WriteLine("S / \\ search, N + create new, E DEL edit, ENTER load, SPACE activate, ESC exit");
+            //keyInfo = Console.ReadKey();
+
+            // Capture the keystroke
+            keyInfo = Console.ReadKey(intercept: true);
+
+
+            // Display captured data
+            Console.WriteLine($"\nKey Pressed: {keyInfo.Key}");
+            Console.WriteLine($"Character: {keyInfo.KeyChar}");
+            Console.WriteLine($"Modifiers: {keyInfo.Modifiers}");
+
+            //Console.SetCursorPosition(0, 24);
+            Console.WriteLine("\n\n\nESC to exit.");
+        } while (keyInfo.Key != ConsoleKey.Escape);
+        //===========================================================
+
+    }
+    //------------------------------------
     public void ShowHeader(string text) 
     { 
     
     }
-    
+    //------------------------------------
     public void ShowLists(List<ListObject> lists) 
     { 
     
     }
-    
+    //------------------------------------
     public void ShowItems(List<TaskObject> tasks) 
     { 
     
     }
-
+    //------------------------------------
     public void ShowAboutApp()
     {
 
     }
-
+    //------------------------------------
     public void ShowUserInfo()
     {
 
     }
-
+    //------------------------------------
     public void EditUserInfo()
     {
 
     }
-
+    //------------------------------------
     public ListUiCommand GetUserInput() 
     {
         return ListUiCommand.NoCommand;
     }
+    //------------------------------------
+    public void ShowSplash() 
+    {
+        // show splashscreen (title, version, author) at the start
 
+        var panel = new Panel("").BorderColor(Color.Red);
+        var centeredPanel = Align.Center(panel).Width(50);
+
+        AnsiConsole.Live(centeredPanel).Start(ctx =>
+        {
+            ctx.UpdateTarget(Align.Center(centeredPanel));
+            ctx.Refresh();
+            Thread.Sleep(200);
+            // show 0.2 sec of small red square
+
+            var spacer = new Text(" ");
+            var combinedContent = new Rows(
+                new Padder(spacer, new Padding(0, 1, 0, 0)),
+                new FigletText(_lc.AppName).Centered().Color(Color.Cyan),
+                new Padder(spacer, new Padding(0, 1, 0, 0)),
+                new Text(" ", new Style(Color.Grey)).Centered(),
+                new Text(" ", new Style(Color.Grey)).Centered(),
+                new Padder(spacer, new Padding(0, 1, 0, 0))
+            );
+            var updatedPanel = new Panel(combinedContent).BorderColor(Color.Red);
+            ctx.UpdateTarget(Align.Center(updatedPanel));
+            ctx.Refresh();
+            Thread.Sleep(300);
+            // show 0.3 sec of large box with app title centered
+
+            combinedContent = new Rows(
+                new Padder(spacer, new Padding(0, 1, 0, 0)),
+                new FigletText(_lc.AppName).Centered().Color(Color.Cyan),
+                new Padder(spacer, new Padding(0, 1, 0, 0)),
+                new Text(_lc.AppVersionDate, new Style(Color.Grey)).Centered(),
+                new Text(" ", new Style(Color.Grey)).Centered(),
+                new Padder(spacer, new Padding(0, 1, 0, 0))
+            );
+            updatedPanel = new Panel(combinedContent).BorderColor(Color.Red);
+            ctx.UpdateTarget(Align.Center(updatedPanel));
+            ctx.Refresh();
+            Thread.Sleep(200);
+            // show 0.2 sec of app title centered, and app version beneath it
+
+            combinedContent = new Rows(
+                new Padder(spacer, new Padding(0, 1, 0, 0)),
+                new FigletText(_lc.AppName).Centered().Color(Color.Cyan),
+                new Padder(spacer, new Padding(0, 1, 0, 0)),
+                new Text(_lc.AppVersionDate, new Style(Color.Grey)).Centered(),
+                new Text(_lc.AppAuthor, new Style(Color.Grey)).Centered(),
+                new Padder(spacer, new Padding(0, 1, 0, 0))
+            );
+            updatedPanel = new Panel(combinedContent).BorderColor(Color.Red);
+            ctx.UpdateTarget(Align.Center(updatedPanel));
+            ctx.Refresh();
+            Thread.Sleep(800);
+            // show 0.8 sec of Author, beneath version date, beneath app title
+
+            ctx.UpdateTarget(new Text(string.Empty));
+            ctx.Refresh();
+            // then reset the screen how it was before
+        });
+
+        Console.ReadKey();
+        Console.Clear();
+    }
+    //------------------------------------
+    public void getScreenDimensions()
+    {
+        ViewTotalColumns = Console.WindowWidth;
+        ViewTotalRows = Console.WindowHeight;
+        AnsiConsole.WriteLine($"Screen size: {ViewTotalColumns} characters wide x {ViewTotalRows} text lines high.");
+    }
+    //------------------------------------
 }
 
+/////==========================================================================================
+////////==========================================================================================
+////////==========================================================================================
+////////==========================================================================================
+////////==========================================================================================
+////////==========================================================================================
+////////==========================================================================================
+////////==========================================================================================
+////////==========================================================================================
+////////==========================================================================================
+////////==========================================================================================
+////////==========================================================================================
+////////==========================================================================================
+////////==========================================================================================
 
 /// /////////////////////////////////////////////////////////////////////////////////
 //SpectrePreloaded.StartupPanel("SA_4_3_1", "Calculate electricity bill with ranges");
