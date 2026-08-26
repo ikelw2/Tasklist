@@ -1,12 +1,10 @@
 ﻿using MiniProject_Working1.Models;
-
 using Spectre.Console;
 using Spectre.Console.Rendering;
-using System.Threading;
-
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 
 namespace MiniProject_Working1.Services;
 
@@ -47,7 +45,9 @@ internal class SpectreUi : IListUiInterface
         do
         {
             
-            
+            // live display required when selecting... on main screens..
+            // exit live display when taking input from user... 
+
             // show header
             // show container or individual list
             // show options
@@ -107,10 +107,71 @@ internal class SpectreUi : IListUiInterface
         return ListUiCommand.NoCommand;
     }
     //------------------------------------
-    public void ShowSplash() 
+    public void ShowSplash()
     {
         // show splashscreen (title, version, author) at the start
 
+        // Note: this function derived from AI-derived refactoring of my code,
+        // with slight adjustments and my comments to better understand it.
+        // See original function below for my original attempt.
+
+        // define a panel (small red rectangle) to show briefly before the full splashscreen
+        var panel = new Panel("").BorderColor(Color.Red);  
+        var centeredPanel = Align.Center(panel);
+
+        // use IRenderable factory pattern that builds layout with parameters, for custom appearance trick
+        IRenderable BuildMainSplashPanel(string version, string author)
+        {
+            var spacer = new Text(" ");
+            var combinedContent = new Rows(
+                new Padder(spacer, new Padding(0, 1, 0, 0)),
+                new FigletText(_lc.AppName).Centered().Color(Color.Cyan), // splash panel shows title first
+                new Padder(spacer, new Padding(0, 1, 0, 0)),
+                new Markup( version ).Centered(), // markup handles colors, so I added colors
+                new Markup( author  ).Centered(),
+                new Padder(spacer, new Padding(0, 1, 0, 0))
+            );
+
+            return Align.Center(new Panel(combinedContent).BorderColor(Color.Red));
+        }
+
+        // run live to prevent clipping/flashing on display
+        AnsiConsole.Live(Align.Center(centeredPanel)).Start(liveDisplayContext => // code block
+        {
+            // helper function to deduplicate the Update/Refresh pipeline
+            void RenderFrame(IRenderable target, int ms)
+            {
+                liveDisplayContext.UpdateTarget(target); // swap target to current view without clipping/flashing
+                liveDisplayContext.Refresh(); // refresh screen so user sees change immediately
+                if (ms > 0) 
+                    Thread.Sleep(ms); // wait a specified amount of ms (500 = 0.5 sec)
+            }
+
+            // Frame 1: Show initial small red square
+            RenderFrame(Align.Center(centeredPanel), 200);
+
+            // Frame 2: Show app title centered
+            RenderFrame(BuildMainSplashPanel(" ", " "), 300);
+
+            // Frame 3: show app title, with version date underneath it
+            RenderFrame(BuildMainSplashPanel(formatAppVersionDate(), " "), 200);
+
+            // Frame 4: show app title, version date, and author underneath it
+            RenderFrame(BuildMainSplashPanel(formatAppVersionDate(), formatAppAuthor()), 1000);
+
+            // Frame 5: clear view
+            RenderFrame(new Text(string.Empty), 0);
+
+            // do not check for any input here; user has to wait the 1.7 seconds for it to dissapear
+        });
+
+        //Console.ReadKey();
+        Console.Clear(); // reset to top of screen
+    }
+    //------------------------------------
+    public void ShowSplashOriginal()
+    {
+        // show splashscreen (title, version, author) at the start
         var panel = new Panel("").BorderColor(Color.Red);
         var centeredPanel = Align.Center(panel).Width(50);
 
@@ -161,15 +222,15 @@ internal class SpectreUi : IListUiInterface
             updatedPanel = new Panel(combinedContent).BorderColor(Color.Red);
             ctx.UpdateTarget(Align.Center(updatedPanel));
             ctx.Refresh();
-            Thread.Sleep(800);
-            // show 0.8 sec of Author, beneath version date, beneath app title
+            Thread.Sleep(1000);
+            // show 1 sec of Author, beneath version date, beneath app title
 
             ctx.UpdateTarget(new Text(string.Empty));
             ctx.Refresh();
             // then reset the screen how it was before
         });
 
-        Console.ReadKey();
+        //Console.ReadKey();
         Console.Clear();
     }
     //------------------------------------
@@ -178,6 +239,69 @@ internal class SpectreUi : IListUiInterface
         ViewTotalColumns = Console.WindowWidth;
         ViewTotalRows = Console.WindowHeight;
         AnsiConsole.WriteLine($"Screen size: {ViewTotalColumns} characters wide x {ViewTotalRows} text lines high.");
+    }
+    //------------------------------------
+    public string formatAppVersionDate() // returns _lc.AppVersionDate formatted for spectre markup
+    {
+        string v = _lc.AppVersionDate;
+
+        if (string.IsNullOrWhiteSpace(v))
+            return v;
+
+        string[] words = v.TrimStart().Split(' ', 5); // divide v into five parts by spaces
+                                                      // "Version 0.2  Build 2026.08.25";
+                                                      // "       ^   ^^     ^          "
+        
+        if (words.Length == 5) // if successfully found 5 words and 4 spaces
+        {
+            //foreach (string w in words) Console.WriteLine(w); // debug to check correct selection
+            
+            if (words[0].Equals("Version") && words[3].Equals("Build")) // if words 1 and 3 are correct
+            {
+                // add green spectre formatting to 2nd word (index 1)
+                // and blue spectre formatting to 4th word (index 3)
+                string output = $"{Markup.Escape(words[0])} " + 
+                    $"[green]{Markup.Escape(words[1])}[/]  " + 
+                    $"{Markup.Escape(words[3])} " +
+                    $"[blue]{Markup.Escape(words[4])}[/]";
+
+                return output;
+            }
+            return "version words Version and Build not correctly located";
+        }
+        return "version not accurate word count";
+    }
+    //------------------------------------
+    public string formatAppAuthor() // returns _lc.AppAuthor formatted for spectre markup
+    {
+        string a = _lc.AppAuthor;
+
+        if (string.IsNullOrWhiteSpace(a))
+            return a;
+
+        string[] words = a.TrimStart().Split(' ', 4); // divide a into four parts by spaces
+                                                      // "By Michael Wood";
+                                                      // "  ^       ^    "
+        
+        if (words.Length == 3) // if successfully found 3 words, and 2 spaces
+        {
+            //foreach (string w in words) Console.WriteLine(w); // debug to check correct selection
+
+            if (words[0].Equals("By")) // if words 1 is 'By'
+            {
+                // add green spectre formatting to first character in author first name 2nd word
+                // and blue spectre formatting to first character in author second name 3nd word
+                string output = $"{Markup.Escape(words[0])} " +
+                    $"[green]{Markup.Escape(words[1].Substring(0, 1))}[/]" + // first char 2nd word
+                    $"{Markup.Escape(words[1].Substring(1))}" +
+                    $"[blue]{Markup.Escape(words[2].Substring(0, 1))}[/]" + // first char 3rd word
+                    $"{Markup.Escape(words[2].Substring(1))}";
+
+                return output;
+            }
+            return "author word By not correctly located";
+        }
+        return "author not accurate word count";
     }
     //------------------------------------
 }

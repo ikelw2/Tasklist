@@ -9,7 +9,7 @@ namespace MiniProject_Working1.Models;
 internal class ListContainer : List<ListObject>
 {
     public string AppName { get; } = "Tasklist";
-    public string AppVersionDate { get; } = ("Version 0.2  Build 2026.08.25");
+    public string AppVersionDate { get; } = "Version 0.2  Build 2026.08.25";
     public string AppAuthor { get; } = "By Michael Wood";
 
     public string UserName { get; set; }
