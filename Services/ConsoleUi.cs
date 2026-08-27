@@ -9,7 +9,7 @@ using System.Threading;
 
 namespace MiniProject_Working1.Services;
 
-internal class SpectreUi : IListUiInterface
+internal class ConsoleUi : IListUiInterface
 {
     private ListContainer _lc;
     public List<TaskObject> SelectedList { get; set; }
@@ -228,6 +228,25 @@ internal class SpectreUi : IListUiInterface
         //Console.WriteLine($"Modifiers: {keyInfo.Modifiers}");
     }
     //------------------------------------
+    public void ConsoleWriteCentered(int row, string text)
+    {
+        if (row >= Console.WindowHeight)
+        {
+            row = Console.WindowHeight - 1;
+        }
+        
+        int ViewTotalCols = Console.WindowWidth;
+
+        string trimmed = text;
+        if (text.Length >= ViewTotalCols)
+            trimmed = text.Substring(0, ViewTotalCols - 1); // trim to totalRows - 1 if too long
+        
+        int halfLengthOfText = trimmed.Length / 2;
+
+        Console.SetCursorPosition(row, ViewTotalCols - halfLengthOfText);
+        Console.Write(trimmed);
+    }
+    //------------------------------------
     public void ShowSplash()
     {
         // show splashscreen (title, version, author) at the start
@@ -237,6 +256,21 @@ internal class SpectreUi : IListUiInterface
         // original code beneath this function, since then I've adjusted/enlarged
         // it to accomodate more functionality, key to escape. To see original
         // code, see function ShowSplashOriginal() below.
+
+        int ViewTotalColumns = Console.WindowWidth;
+        int ViewTotalRows = Console.WindowHeight;
+
+        int CenterHoriz = ViewTotalRows / 2;
+        int CenterVert = ViewTotalColumns / 2;
+
+        Console.Clear();
+
+        ConsoleWriteCentered(2, _lc.AppName);
+        ConsoleWriteCentered(4, _lc.AppName);
+        ConsoleWriteCentered(5, _lc.AppName);
+        ConsoleWriteCentered(6, _lc.AppName);
+        
+        Console.WriteLine();
 
         // define a panel (small red rectangle) to show briefly before the full splashscreen
         var panel = new Panel("").BorderColor(Color.Red);  

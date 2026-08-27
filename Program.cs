@@ -9,6 +9,7 @@ class Program
 
         ListContainer LC = new();
 
+        //IListUiInterface cUi = new ConsoleUi(LC);
         IListUiInterface sUi = new SpectreUi(LC);
 
         sUi.Start();
