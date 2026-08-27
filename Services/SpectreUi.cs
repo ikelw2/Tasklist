@@ -3,6 +3,7 @@ using Spectre.Console;
 using Spectre.Console.Rendering;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 
@@ -13,7 +14,8 @@ internal class SpectreUi : IListUiInterface
     private ListContainer _lc;
     public List<TaskObject> SelectedList { get; set; }
     public TaskObject SelectedTask { get; set; }
-    public ViewStatus ViewMode { get; set; }
+    public AppStatus Status { get; set; } = AppStatus.Loading;
+    public bool SearchOrFilterEnabled { get; set; } = false;
 
     public Table ViewTable { get; set; } = new Table();
     public int ViewTotalColumns { get; set; }
@@ -37,99 +39,231 @@ internal class SpectreUi : IListUiInterface
     //------------------------------------
     public void Start()
     {
+        // hide cursor  (only show cursor when editing)
+
         ShowSplash();
 
-        ConsoleKeyInfo keyInfo;
-
-        // main loop
-        do
-        {
-            
-            // live display required when selecting... on main screens..
-            // exit live display when taking input from user... 
-
-            // show header
-            // show container or individual list
-            // show options
+        ShowHeader();
 
 
-            Console.WriteLine("S / \\ search, N + create new, E DEL edit, ENTER load, SPACE activate, ESC exit");
-            //keyInfo = Console.ReadKey();
-
-            // Capture the keystroke
-            keyInfo = Console.ReadKey(intercept: true);
-
-
-            // Display captured data
-            Console.WriteLine($"\nKey Pressed: {keyInfo.Key}");
-            Console.WriteLine($"Character: {keyInfo.KeyChar}");
-            Console.WriteLine($"Modifiers: {keyInfo.Modifiers}");
-
-            //Console.SetCursorPosition(0, 24);
-            Console.WriteLine("\n\n\nESC to exit.");
-        } while (keyInfo.Key != ConsoleKey.Escape);
+        //// main loop
+        //ConsoleKeyInfo keyInfo;
+        //do
+        //{
+        //    // live display required when selecting... on main screens..
+        //    // exit live display when taking input from user... 
+        //
+        //    // show header
+        //    // show container or individual list
+        //    // show options
+        //
+        //    //Console.SetCursorPosition(0, 24);
+        //    Console.WriteLine("\n\n\nESC to exit.");
+        //} while (keyInfo.Key != ConsoleKey.Escape);
         //===========================================================
 
+        // show cursor again upon exit
     }
     //------------------------------------
-    public void ShowHeader(string text) 
-    { 
-    
+    public void ShowHeader() 
+    {
+        //AnsiConsole.Cursor.Show();
+        //Console.SetCursorPosition(0, (maxRowReached* 2) + 3);
+        //Console.SetCursorPosition(branchX, screenRow + 1);
+        //AnsiConsole.Markup("[yellow]\\[/]")
+        //AnsiConsole.Cursor.Hide();
+        //int maxRowReached = 0;
+
+        // reformat this to look good
+        Console.WriteLine("Up/Down/Enter - Select");
+        Console.WriteLine("Spacebar - Toggle Active");
+        Console.WriteLine("Spacebar - Toggle Active");
+        Console.WriteLine("N - Create New");
+        Console.WriteLine("E - Edit Subject");
+        Console.WriteLine("Page Up/Down - Reorder");
+        Console.WriteLine("Delete - Delete List");
+        Console.WriteLine("S - Search");
+        Console.WriteLine("F - Filter");
+        Console.WriteLine("Esc - Show All / Exit");
+        Console.WriteLine("U - Show User Info");
+        Console.WriteLine("A - About App");
     }
     //------------------------------------
     public void ShowLists(List<ListObject> lists) 
-    { 
-    
+    {
+        Status = AppStatus.ShowLists;
+        
+        // loop {
+
+            // print out lists, with selected list in special font
+
+            // accept user input, process to determine next steps
+
+        // end loop
+
+        
+        // return to loading upon exit from this stage
+        Status = AppStatus.Loading;
     }
     //------------------------------------
     public void ShowItems(List<TaskObject> tasks) 
-    { 
-    
+    {
+        Status = AppStatus.ShowItems;
+
+        // loop {
+
+        // print out items of selected list, with selected item in special font
+
+        // accept user input, process to determine next steps
+
+        // end loop
+
+
+        // return to loading upon exit from this stage
+        Status = AppStatus.Loading;
     }
     //------------------------------------
     public void ShowAboutApp()
     {
+        Status = AppStatus.ShowAboutApp;
 
+        // loop for 10 sec {
+
+        // print out About app // splashscreen again?
+
+        // accept any key to quit early
+
+        // end loop
+
+
+        // return to loading upon exit from this stage
+        Status = AppStatus.Loading;
     }
     //------------------------------------
     public void ShowUserInfo()
     {
+        Status = AppStatus.ShowUserInfo;
 
+        // loop {
+
+        // print out user info
+
+        // accept user input if E or Enter, allow to edit user info
+
+        // end loop
+
+
+        // return to loading upon exit from this stage
+        Status = AppStatus.Loading;
     }
     //------------------------------------
     public void EditUserInfo()
     {
+        //dedicated input to edit user info here
 
+        // likely not asynch/threaded
     }
     //------------------------------------
     public ListUiCommand GetUserInput() 
     {
+        ConsoleKeyInfo keyInfo = Console.ReadKey(intercept: true); // 'intercept' prevents input from echoing to screen
+
+        switch (Status) {
+            case AppStatus.ShowLists:
+            case AppStatus.ShowItems:
+                switch (keyInfo.Key)
+                {
+                    case ConsoleKey.UpArrow:
+                        return ListUiCommand.ArrowUp;
+                    case ConsoleKey.DownArrow:
+                        return ListUiCommand.ArrowDown;
+                    case ConsoleKey.Enter:
+                        if (Status == AppStatus.ShowLists)
+                            return ListUiCommand.Open; // enter to open a list and show tasks inside
+                        if (Status == AppStatus.ShowItems)
+                            return ListUiCommand.EditName; // enter to edit name if showing tasks already
+                        break;
+                    case ConsoleKey.Spacebar:
+                        return ListUiCommand.Toggle;
+                    case ConsoleKey.N:
+                        return ListUiCommand.CreateNew;
+                    case ConsoleKey.E:
+                        return ListUiCommand.EditName;
+                    case ConsoleKey.PageUp:
+                        return ListUiCommand.MoveUp;
+                    case ConsoleKey.PageDown:
+                        return ListUiCommand.MoveDown;
+                    case ConsoleKey.Delete:
+                        return ListUiCommand.Delete;
+                    case ConsoleKey.S:
+                        return ListUiCommand.Search;
+                    case ConsoleKey.F:
+                        return ListUiCommand.Filter;
+                    case ConsoleKey.Escape:
+                        if (SearchOrFilterEnabled) return ListUiCommand.ShowAll; // clears search or filter if either active
+                        return ListUiCommand.Escape; // or escape if neither active
+                    case ConsoleKey.A:
+                        return ListUiCommand.ShowAppInfo;
+                    case ConsoleKey.U:
+                        return ListUiCommand.ShowUserInfo;
+                    default:
+                        Console.Beep(); // if key not appropriate, beep to indicate so to user
+                        break;
+                }
+                break;
+
+            case AppStatus.ShowAboutApp:
+                return ListUiCommand.Escape; // any key to exit this screen
+
+            case AppStatus.ShowSplashScreen: // input read another way in ShowSplashScreen
+            case AppStatus.Loading: // accept no input while in this status
+            default:
+                break; 
+        }
         return ListUiCommand.NoCommand;
+        
+        // extra code
+        // //debug captured data
+        //Console.WriteLine($"\nKey Pressed: {keyInfo.Key}");
+        //Console.WriteLine($"Character: {keyInfo.KeyChar}");
+        //Console.WriteLine($"Modifiers: {keyInfo.Modifiers}");
     }
     //------------------------------------
     public void ShowSplash()
     {
         // show splashscreen (title, version, author) at the start
+        Status = AppStatus.ShowSplashScreen;
 
-        // Note: this function derived from AI-derived refactoring of my code,
-        // with slight adjustments and my comments to better understand it.
-        // See original function below for my original attempt.
+        // Note: some of this code was initially derived from AI-refactoring of my
+        // original code beneath this function, since then I've adjusted/enlarged
+        // it to accomodate more functionality, key to escape. To see original
+        // code, see function ShowSplashOriginal() below.
 
         // define a panel (small red rectangle) to show briefly before the full splashscreen
         var panel = new Panel("").BorderColor(Color.Red);  
         var centeredPanel = Align.Center(panel);
 
         // use IRenderable factory pattern that builds layout with parameters, for custom appearance trick
-        IRenderable BuildMainSplashPanel(string version, string author)
+        IRenderable BuildMainSplashPanel(string version = " ", 
+                                         string author = " ", 
+                                         string userName = " ", 
+                                         string emailContact = " ", 
+                                         string ifFoundContact = " ",
+                                         string pressAnyKey = " ")
         {
             var spacer = new Text(" ");
             var combinedContent = new Rows(
                 new Padder(spacer, new Padding(0, 1, 0, 0)),
                 new FigletText(_lc.AppName).Centered().Color(Color.Cyan), // splash panel shows title first
                 new Padder(spacer, new Padding(0, 1, 0, 0)),
-                new Markup( version ).Centered(), // markup handles colors, so I added colors
+                new Markup( version ).Centered(), 
                 new Markup( author  ).Centered(),
-                new Padder(spacer, new Padding(0, 1, 0, 0))
+                new Padder(spacer, new Padding(0, 1, 0, 0)),
+                new Markup($"[yellow]{Markup.Escape( userName )}[/]").Centered(), 
+                new Markup($"[yellow]{Markup.Escape( emailContact )}[/]").Centered(), 
+                new Markup($"[yellow]{Markup.Escape( ifFoundContact )}[/]").Centered(), 
+                new Padder(spacer, new Padding(0, 1, 0, 0)),
+                new Markup($"[blink white]{Markup.Escape(pressAnyKey)}[/]").Centered()
             );
 
             return Align.Center(new Panel(combinedContent).BorderColor(Color.Red));
@@ -143,23 +277,36 @@ internal class SpectreUi : IListUiInterface
             {
                 liveDisplayContext.UpdateTarget(target); // swap target to current view without clipping/flashing
                 liveDisplayContext.Refresh(); // refresh screen so user sees change immediately
-                if (ms > 0) 
-                    Thread.Sleep(ms); // wait a specified amount of ms (500 = 0.5 sec)
+                int elapsed = 0;
+                while (elapsed < ms)
+                {
+                    if (Console.KeyAvailable)
+                    {
+                        //AnsiConsole.Console.Input.ReadKey(intercept: true); // simple process keypress
+                        break;
+                    }
+                    Thread.Sleep(100);
+                    elapsed += 100;
+                }
             }
 
             // Frame 1: Show initial small red square
             RenderFrame(Align.Center(centeredPanel), 200);
 
             // Frame 2: Show app title centered
-            RenderFrame(BuildMainSplashPanel(" ", " "), 300);
+            RenderFrame(BuildMainSplashPanel(), 300);
 
             // Frame 3: show app title, with version date underneath it
-            RenderFrame(BuildMainSplashPanel(formatAppVersionDate(), " "), 200);
+            RenderFrame(BuildMainSplashPanel(formatAppVersionDate()), 200);
 
             // Frame 4: show app title, version date, and author underneath it
-            RenderFrame(BuildMainSplashPanel(formatAppVersionDate(), formatAppAuthor()), 1000);
+            RenderFrame(BuildMainSplashPanel(formatAppVersionDate(), formatAppAuthor()), 300);
 
-            // Frame 5: clear view
+            // Frame 5: show app title, version date, author and USER INFORMATION
+            RenderFrame(BuildMainSplashPanel(formatAppVersionDate(), formatAppAuthor(), _lc.UserName, _lc.EmailContact, _lc.IfFoundContact, 
+                        "Press Any Key To Continue" ), 10000);
+
+            // Frame 6: clear view
             RenderFrame(new Text(string.Empty), 0);
 
             // do not check for any input here; user has to wait the 1.7 seconds for it to dissapear
@@ -167,6 +314,9 @@ internal class SpectreUi : IListUiInterface
 
         //Console.ReadKey();
         Console.Clear(); // reset to top of screen
+        
+        // reset status to loading
+        Status = AppStatus.Loading;
     }
     //------------------------------------
     public void ShowSplashOriginal()
@@ -201,7 +351,7 @@ internal class SpectreUi : IListUiInterface
                 new Padder(spacer, new Padding(0, 1, 0, 0)),
                 new FigletText(_lc.AppName).Centered().Color(Color.Cyan),
                 new Padder(spacer, new Padding(0, 1, 0, 0)),
-                new Text(_lc.AppVersionDate, new Style(Color.Grey)).Centered(),
+                new Text(formatAppVersionDate(), new Style(Color.Grey)).Centered(),
                 new Text(" ", new Style(Color.Grey)).Centered(),
                 new Padder(spacer, new Padding(0, 1, 0, 0))
             );
@@ -215,8 +365,8 @@ internal class SpectreUi : IListUiInterface
                 new Padder(spacer, new Padding(0, 1, 0, 0)),
                 new FigletText(_lc.AppName).Centered().Color(Color.Cyan),
                 new Padder(spacer, new Padding(0, 1, 0, 0)),
-                new Text(_lc.AppVersionDate, new Style(Color.Grey)).Centered(),
-                new Text(_lc.AppAuthor, new Style(Color.Grey)).Centered(),
+                new Text(formatAppVersionDate(), new Style(Color.Grey)).Centered(),
+                new Text(formatAppAuthor(), new Style(Color.Grey)).Centered(),
                 new Padder(spacer, new Padding(0, 1, 0, 0))
             );
             updatedPanel = new Panel(combinedContent).BorderColor(Color.Red);

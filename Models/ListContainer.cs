@@ -12,15 +12,16 @@ internal class ListContainer : List<ListObject>
     public string AppVersionDate { get; } = "Version 0.2  Build 2026.08.25";
     public string AppAuthor { get; } = "By Michael Wood";
 
-    public string UserName { get; set; }
-    public string EmailContact { get; set; }
-    public string IfFoundContact { get; set; }
+    public string UserName { get; set; } = "UserName: Firstname Lastname";
+    public string EmailContact { get; set; } = "Email: email@outlook.com";
+
+    public string IfFoundContact { get; set; } = "If Found Contact: 555-555-1212";
 
     public ListContainer()
     {
-        UserName = string.Empty;
-        EmailContact = string.Empty;
-        IfFoundContact = string.Empty;
+        //UserName = string.Empty;
+        //EmailContact = string.Empty;
+        //IfFoundContact = string.Empty;
     }
 
     //------------------------------------
