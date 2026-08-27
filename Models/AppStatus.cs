@@ -13,6 +13,7 @@ public enum AppStatus
     EditUserInfo,
     ShowLists,
     EditLists,
-    ShowItems,
-    EditItems
+    ShowTasks,
+    EditTasks,
+    Escape
 };

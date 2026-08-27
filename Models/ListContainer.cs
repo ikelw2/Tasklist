@@ -12,16 +12,16 @@ internal class ListContainer : List<ListObject>
     public string AppVersionDate { get; } = "Version 0.2  Build 2026.08.25";
     public string AppAuthor { get; } = "By Michael Wood";
 
-    public string UserName { get; set; } = "UserName: Firstname Lastname";
-    public string EmailContact { get; set; } = "Email: email@outlook.com";
+    public string UserName { get; set; }
+    public string EmailContact { get; set; }
+    public string IfFoundContact { get; set; }
 
-    public string IfFoundContact { get; set; } = "If Found Contact: 555-555-1212";
 
     public ListContainer()
     {
-        //UserName = string.Empty;
-        //EmailContact = string.Empty;
-        //IfFoundContact = string.Empty;
+        UserName = "UserName: ";
+        EmailContact = "Email: ";
+        IfFoundContact = "If Found Contact: ";
     }
 
     //------------------------------------
@@ -29,9 +29,7 @@ internal class ListContainer : List<ListObject>
     {
         if (string.IsNullOrWhiteSpace(searchText))
             return new List<ListObject>(this);
-
-        return this.FindAll(listObj =>
-            listObj.Subject.Contains(searchText, StringComparison.OrdinalIgnoreCase));
+        return this.FindAll(listObj => listObj.Subject.Contains(searchText, StringComparison.OrdinalIgnoreCase));
     }
     //------------------------------------
     public List<ListObject> ListShowAll()
@@ -41,24 +39,31 @@ internal class ListContainer : List<ListObject>
     //------------------------------------
     public List<ListObject> ListFilter(int filterType)
     {
-        return filterType switch
+        switch (filterType)
         {
-            0 => new List<ListObject>(this),                 // show all lists
-            1 => this.FindAll(taskObj => !taskObj.IsActive), // inactive lists
-            2 => this.FindAll(taskObj => taskObj.IsActive),  // active lists
-            _ => new List<ListObject>(this)                  // default, show all
+            case 1:
+                return this.FindAll(taskObj => !taskObj.IsActive); // inactive lists
+            case 2:
+                return this.FindAll(taskObj => taskObj.IsActive); // active lists
+            default:
+                break;
         };
+        return new List<ListObject>(this); // default, show all, no filter
     }
     //------------------------------------
-    public void ListReorder(int index, int direction)
+    public void ListReorder(int index, bool directionUp)
     {
+        // if index out of range
         if (index < 0 || index >= this.Count)
             return;
 
-        int newIndex = index + direction;
+        // add direction (+1 or -1) to index to get newIndex
+        int newIndex = index + (directionUp ? -1 : 1);
 
+        // if newIndex is not too small or too large, out of range
         if (newIndex >= 0 && newIndex < this.Count)
         {
+            // move item at index to newIndex, and update LastAccess
             var ListObject = this[index];
             this.RemoveAt(index);
             this.Insert(newIndex, ListObject);
@@ -84,7 +89,7 @@ internal class ListContainer : List<ListObject>
         };
 
         this.Add(newList);
-        return newList;
+        return this[this.Count-1];
     }
     //------------------------------------
     public bool DeleteList(int index)
@@ -108,6 +113,13 @@ internal class ListContainer : List<ListObject>
         Console.WriteLine(info.ToString());
         Console.ReadLine(); Console.Clear();
         return info.ToString();
+    }
+    //------------------------------------
+    public void SetUserInfo(string userName, string emailContact, string ifFoundContact)
+    {
+        UserName = userName;
+        EmailContact = emailContact;
+        IfFoundContact = ifFoundContact;
     }
     //------------------------------------
     public string EditUserInfo()

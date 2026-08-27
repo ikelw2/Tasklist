@@ -14,15 +14,15 @@ public interface IListUiInterface // will hopefully make transition to MAUI or o
     public void ShowSplash();
     public void ShowHeader();
     public void ShowLists(List<ListObject> lists);
-    public void ShowItems(List<TaskObject> tasks);
+    public void ShowTasks(List<TaskObject> tasks);
     public void ShowAboutApp();
     public void ShowUserInfo();
     public void EditUserInfo();
-    public ListUiCommand GetUserInput();
+    public AppStatus HandleUserInput(AppStatus curStatus);
 
 }
 
-public enum ListUiCommand
+public enum UserIntention
 {
     NoCommand = 0, 
     Escape,

@@ -10,7 +10,14 @@ public class ListObject : List<TaskObject>
     public string Subject { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
     public DateTime LastAccess { get; set; } = DateTime.Now;
+    public bool IsTaskSearchFilterActive { get; set; } = false;
 
+    public ListObject(string subject, bool isActive = true)
+    {
+        Subject = subject;
+        IsActive = isActive;
+        LastAccess = DateTime.Now;
+    }
     public ListObject()
     {
         Subject = string.Empty;
@@ -51,8 +58,11 @@ public class ListObject : List<TaskObject>
     {
         LastAccess = DateTime.Now;
         if (string.IsNullOrWhiteSpace(searchText))
+        {
+            IsTaskSearchFilterActive = false;
             return new List<TaskObject>(this);
-
+        }
+        IsTaskSearchFilterActive = true;
         return this.FindAll(taskObj =>
             taskObj.Task.Contains(searchText, StringComparison.OrdinalIgnoreCase));
     }
@@ -83,7 +93,7 @@ public class ListObject : List<TaskObject>
         }
     }
     //------------------------------------
-    public TaskObject CreateNewTask(string task = "", int index = -1)
+    public int CreateNewTask(string task = "", int index = -1)
     {
         if (index < 0 || index >= this.Count) // if no index provided, set insertion point at last index
             index = this.Count - 1;
@@ -94,33 +104,55 @@ public class ListObject : List<TaskObject>
             Done = false
         };
 
+        int newIndex = index + 1;
+
         this.Insert(index + 1, newTaskObj);
         IsActive = true;
         LastAccess = DateTime.Now;
-        return newTaskObj;
-    }    
+        return newIndex;
+    }
     //------------------------------------
-    public void MoveTaskUp(int index)
+    public void TaskReorder(int index, int direction)
     {
-        if (index > 0 && index < this.Count)
+        // if index out of range
+        if (index < 0 || index >= this.Count)
+            return;
+
+        // add direction (+1 or -1) to index to get newIndex
+        int newIndex = index + direction;
+
+        // if newIndex is not too small or too large, out of range
+        if (newIndex >= 0 && newIndex < this.Count)
         {
+            // move item at index to newIndex, and update LastAccess
             var task = this[index];
             this.RemoveAt(index);
-            this.Insert(index - 1, task);
+            this.Insert(newIndex, task);
             LastAccess = DateTime.Now;
         }
     }
     //------------------------------------
-    public void MoveTaskDown(int index)
-    {
-        if (index >= 0 && index < this.Count - 1)
-        {
-            var task = this[index];
-            this.RemoveAt(index);
-            this.Insert(index + 1, task);
-            LastAccess = DateTime.Now;
-        }
-    }
+    //public void MoveTaskUp(int index)
+    //{
+    //    if (index > 0 && index < this.Count)
+    //    {
+    //        var task = this[index];
+    //        this.RemoveAt(index);
+    //        this.Insert(index - 1, task);
+    //        LastAccess = DateTime.Now;
+    //    }
+    //}
+    ////------------------------------------
+    //public void MoveTaskDown(int index)
+    //{
+    //    if (index >= 0 && index < this.Count - 1)
+    //    {
+    //        var task = this[index];
+    //        this.RemoveAt(index);
+    //        this.Insert(index + 1, task);
+    //        LastAccess = DateTime.Now;
+    //    }
+    //}
     //------------------------------------
     public void DeleteTask(int index)
     {

@@ -12,7 +12,7 @@ namespace MiniProject_Working1.Services;
 internal class SpectreUi : IListUiInterface
 {
     private ListContainer _lc;
-    public List<TaskObject> SelectedList { get; set; }
+    public List<TaskObject> SelectedList { get; set; } // int
     public TaskObject SelectedTask { get; set; }
     public AppStatus Status { get; set; } = AppStatus.Loading;
     public bool SearchOrFilterEnabled { get; set; } = false;
@@ -105,9 +105,9 @@ internal class SpectreUi : IListUiInterface
         Status = AppStatus.Loading;
     }
     //------------------------------------
-    public void ShowItems(List<TaskObject> tasks) 
+    public void ShowTasks(List<TaskObject> tasks) 
     {
-        Status = AppStatus.ShowItems;
+        Status = AppStatus.ShowTasks;
 
         // loop {
 
@@ -163,63 +163,63 @@ internal class SpectreUi : IListUiInterface
         // likely not asynch/threaded
     }
     //------------------------------------
-    public ListUiCommand GetUserInput() 
+    public AppStatus HandleUserInput(AppStatus curStatus) 
     {
         ConsoleKeyInfo keyInfo = Console.ReadKey(intercept: true); // 'intercept' prevents input from echoing to screen
 
         switch (Status) {
             case AppStatus.ShowLists:
-            case AppStatus.ShowItems:
+            case AppStatus.ShowTasks:
                 switch (keyInfo.Key)
                 {
-                    case ConsoleKey.UpArrow:
-                        return ListUiCommand.ArrowUp;
-                    case ConsoleKey.DownArrow:
-                        return ListUiCommand.ArrowDown;
-                    case ConsoleKey.Enter:
-                        if (Status == AppStatus.ShowLists)
-                            return ListUiCommand.Open; // enter to open a list and show tasks inside
-                        if (Status == AppStatus.ShowItems)
-                            return ListUiCommand.EditName; // enter to edit name if showing tasks already
-                        break;
-                    case ConsoleKey.Spacebar:
-                        return ListUiCommand.Toggle;
-                    case ConsoleKey.N:
-                        return ListUiCommand.CreateNew;
-                    case ConsoleKey.E:
-                        return ListUiCommand.EditName;
-                    case ConsoleKey.PageUp:
-                        return ListUiCommand.MoveUp;
-                    case ConsoleKey.PageDown:
-                        return ListUiCommand.MoveDown;
-                    case ConsoleKey.Delete:
-                        return ListUiCommand.Delete;
-                    case ConsoleKey.S:
-                        return ListUiCommand.Search;
-                    case ConsoleKey.F:
-                        return ListUiCommand.Filter;
-                    case ConsoleKey.Escape:
-                        if (SearchOrFilterEnabled) return ListUiCommand.ShowAll; // clears search or filter if either active
-                        return ListUiCommand.Escape; // or escape if neither active
-                    case ConsoleKey.A:
-                        return ListUiCommand.ShowAppInfo;
-                    case ConsoleKey.U:
-                        return ListUiCommand.ShowUserInfo;
+                    //case ConsoleKey.UpArrow:
+                    //    return UserIntention.ArrowUp;
+                    //case ConsoleKey.DownArrow:
+                    //    return UserIntention.ArrowDown;
+                    //case ConsoleKey.Enter:
+                    //    if (Status == AppStatus.ShowLists)
+                    //        return UserIntention.Open; // enter to open a list and show tasks inside
+                    //    if (Status == AppStatus.ShowTasks)
+                    //        return UserIntention.EditName; // enter to edit name if showing tasks already
+                    //    break;
+                    //case ConsoleKey.Spacebar:
+                    //    return UserIntention.Toggle;
+                    //case ConsoleKey.N:
+                    //    return UserIntention.CreateNew;
+                    //case ConsoleKey.E:
+                    //    return UserIntention.EditName;
+                    //case ConsoleKey.PageUp:
+                    //    return UserIntention.MoveUp;
+                    //case ConsoleKey.PageDown:
+                    //    return UserIntention.MoveDown;
+                    //case ConsoleKey.Delete:
+                    //    return UserIntention.Delete;
+                    //case ConsoleKey.S:
+                    //    return UserIntention.Search;
+                    //case ConsoleKey.F:
+                    //    return UserIntention.Filter;
+                    //case ConsoleKey.Escape:
+                    //    if (SearchOrFilterEnabled) return UserIntention.ShowAll; // clears search or filter if either active
+                    //    return UserIntention.Escape; // or escape if neither active
+                    //case ConsoleKey.A:
+                    //    return UserIntention.ShowAppInfo;
+                    //case ConsoleKey.U:
+                    //    return UserIntention.ShowUserInfo;
                     default:
                         Console.Beep(); // if key not appropriate, beep to indicate so to user
                         break;
                 }
                 break;
 
-            case AppStatus.ShowAboutApp:
-                return ListUiCommand.Escape; // any key to exit this screen
+            //case AppStatus.ShowAboutApp:
+            //    return UserIntention.Escape; // any key to exit this screen
 
             case AppStatus.ShowSplashScreen: // input read another way in ShowSplashScreen
             case AppStatus.Loading: // accept no input while in this status
             default:
                 break; 
         }
-        return ListUiCommand.NoCommand;
+        return AppStatus.ShowLists;
         
         // extra code
         // //debug captured data
