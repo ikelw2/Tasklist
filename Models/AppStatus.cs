@@ -15,5 +15,6 @@ public enum AppStatus
     EditLists,
     ShowTasks,
     EditTasks,
+    EditSearchString,
     Escape
 };

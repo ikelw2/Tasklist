@@ -1,6 +1,7 @@
 ﻿using MiniProject_Working1.Models;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Text;
 using System.Threading;
 
@@ -16,6 +17,8 @@ internal class ConsoleUi : IListUiInterface
     public bool TaskSearchOrFilterEnabled { get; set; } = false;
     public int ViewTotalWidth { get; set; }
     public int ViewTotalHeight { get; set; }
+
+    public bool EditSearchString { get; set; } = false;
 
     public string ListSearchString { get; set; } = string.Empty;
     public string TaskSearchString { get; set; } = string.Empty;
@@ -55,13 +58,21 @@ internal class ConsoleUi : IListUiInterface
                     ShowAboutApp();
                     break;
                 case AppStatus.ShowLists:
-                    ShowLists(_lc);
+                    if (ListFilter != 0)
+                        ShowLists(_lc.ListFilter(ListFilter));
+                    else if (ListSearchString.Length != 0)
+                        ShowLists(_lc.ListSearch(ListSearchString));
+                    else
+                        ShowLists(_lc);
                     break;
                 case AppStatus.ShowTasks:
-                    ShowTasks(_lc[SelectedList]);
+                    if (TaskFilter != 0)
+                        ShowTasks(_lc[SelectedList].TaskFilter(TaskFilter));
+                    else if (TaskSearchString.Length != 0)
+                        ShowTasks(_lc[SelectedList].TaskSearch(TaskSearchString));
+                    else
+                        ShowTasks(_lc[SelectedList]);
                     break;
-
-                // not yet implemented:
                 case AppStatus.ShowUserInfo:
                     ShowUserInfo();
                     break;
@@ -97,6 +108,11 @@ internal class ConsoleUi : IListUiInterface
             Console.WriteLine("  ***** Editing Mode - Type in a new value and press ENTER *****                                                          " +
             "                                                                                                                  ");
         }
+        else if (EditSearchString)
+        {
+            Console.WriteLine("  ***** Enter the text value you would like to search for *****                                                           " +
+            "                                                                                                                  ");
+        }
         else
         {
             Console.WriteLine("ESC - Exit   |   S - Search   |   F - Filter   |   PAGE UP/DOWN - Reorder   |   U - Show User Info   |   A - About App   |" +
@@ -110,26 +126,63 @@ internal class ConsoleUi : IListUiInterface
         if (Status == AppStatus.ShowLists)
         {
             searchActive = (ListSearchOrFilterEnabled ? "  [Search/Filter Active]  " : " [Search/Filter Inactive] ");
-            searchString = ListSearchString;
             if (ListFilter != 0)
-                activeFilter = (ListFilter == 1 ? "Active Only" : "Inactive Only");
+                activeFilter = (ListFilter == 1 ? "Active Only" : "Inactive Only"); 
+            else
+                searchString = ListSearchString;
+            
         }
         if (Status == AppStatus.ShowTasks)
         {
             searchActive = (TaskSearchOrFilterEnabled ? "  [Search/Filter Active]  " : " [Search/Filter Inactive] ");
-            searchString = TaskSearchString;
             if (TaskFilter != 0)
                 activeFilter = (TaskFilter == 1 ? "Complete Only" : "Incomplete Only");
+            else
+                searchString = TaskSearchString;
+            
         }
 
         (int left, int top) = Console.GetCursorPosition();
         // print search string
         Console.SetCursorPosition(0, top);
-        Console.WriteLine($"{searchActive}     Search String: '{searchString}'     Filter: {activeFilter}   line={top}");
+        Console.Write($"{searchActive}     ");
+
+        // (ShowLists AND ListEnabled) OR (ShowTasks AND TaskEnabled)
+        if ((Status == AppStatus.ShowLists && ListSearchOrFilterEnabled) || (Status == AppStatus.ShowTasks && TaskSearchOrFilterEnabled))
+        {
+            // print out exactly what the search string or filter setting is... 
+            //Console.SetCursorPosition(26, top); // go to after searchActive string...
+            if (searchString.Length != 0)
+                Console.WriteLine($"Search String: '{searchString}'");
+            else
+                Console.WriteLine($"Filter: {activeFilter}");
+        } 
+        else
+        {
+            Console.WriteLine();
+        }
 
         //Console.WriteLine("total width 120 = " + ViewTotalWidth + "    total height 30 = " + ViewTotalHeight);
         Console.WriteLine(new string('_', ViewTotalWidth));
         Console.WriteLine();
+    }
+    //------------------------------------
+    public string TrimAndFormat(string text, bool dashed, int totalLength) //
+    {
+        StringBuilder sb = new("   "); // start with two spaces
+
+        sb.Append(text); // append the provided text
+
+        int charsToAppend = totalLength - text.Length + 5; // determine how many characters remaining in width
+        if (charsToAppend > ViewTotalWidth - 40 - text.Length) // excluding 40 used by other fields
+            charsToAppend = ViewTotalWidth - 40 - text.Length;
+
+        sb.Append(' ', charsToAppend); // append spaces up to to five chars after the totalLength
+
+        if (dashed) // if not active, replace all spaces with dashes
+            sb.Replace(' ', '-');
+
+        return sb.ToString();
     }
     //------------------------------------
     public void ShowLists(List<ListObject> lists) 
@@ -166,24 +219,6 @@ internal class ConsoleUi : IListUiInterface
         }
     }
     //------------------------------------
-    public string TrimAndFormat(string text, bool dashed, int totalLength) //
-    {
-        StringBuilder sb = new("   "); // start with two spaces
-        
-        sb.Append(text); // append the provided text
-
-        int charsToAppend = totalLength - text.Length + 5; // determine how many characters remaining in width
-        if (charsToAppend > ViewTotalWidth - 40 - text.Length) // excluding 40 used by other fields
-            charsToAppend = ViewTotalWidth - 40 - text.Length;
-
-        sb.Append(' ', charsToAppend); // append spaces up to to five chars after the totalLength
-
-        if (dashed) // if not active, replace all spaces with dashes
-            sb.Replace(' ', '-');
-        
-        return sb.ToString();
-    }
-    //------------------------------------
     public void ShowTasks(List<TaskObject> tasks) 
     {
         longestTextEntry = 0;
@@ -217,17 +252,104 @@ internal class ConsoleUi : IListUiInterface
     //------------------------------------
     public void ShowUserInfo()
     {
-        Console.WriteLine("show user info");
-        // loop {
+        Console.WriteLine();
+        Console.WriteLine(" User Information:  Press E to Edit");
+        Console.WriteLine();
+        Console.WriteLine(_lc.UserName);
+        Console.WriteLine(_lc.EmailContact);
+        Console.WriteLine(_lc.IfFoundContact);
+        Console.WriteLine();
+    }
+    //------------------------------------
+    public void EditUserInfo()
+    {
+        string? input = string.Empty;
 
-        // print out user info
+        //Console.Clear();
+        Console.WriteLine(); 
+        Console.WriteLine(" ***** Editing User Information ***** ");
+        Console.WriteLine();
 
-        // accept user input if E or Enter, allow to edit user info
+        // collect User Name
+        Console.Write("Enter your User Name: ");
+        (int left, int top) = Console.GetCursorPosition();
+        do
+        {
+            Console.SetCursorPosition(left, top);
+            Console.Write(new string('_', 30));
+            Console.SetCursorPosition(left, top);
+            
+            input = Console.ReadLine();
 
-        // end loop
+            if (string.IsNullOrWhiteSpace(input))
+                Console.Beep();
+        } while (string.IsNullOrWhiteSpace(input));
+        _lc.UserName = "User Name: " + input;
 
+        // collect Email Contact
+        Console.Write("Enter your Email Contact: ");
+        (left, top) = Console.GetCursorPosition();
+        do
+        {
+            Console.SetCursorPosition(left, top);
+            Console.Write(new string('_', 30));
+            Console.SetCursorPosition(left, top);
+            input = Console.ReadLine();
 
-        // return to loading upon exit from this stage
+            if (string.IsNullOrWhiteSpace(input) || !input.Contains("@") || !input.Contains("."))
+                Console.Beep();
+        } while (string.IsNullOrWhiteSpace(input) || !input.Contains("@") || !input.Contains("."));
+        _lc.EmailContact = "Email Contact: " + input;
+
+        // collect If Found Contact
+        Console.Write("Enter your If Found Contact: ");
+        (left, top) = Console.GetCursorPosition();
+        do
+        {
+            Console.SetCursorPosition(left, top);
+            Console.Write(new string('_', 30));
+            Console.SetCursorPosition(left, top);
+            input = Console.ReadLine();
+
+            if (string.IsNullOrWhiteSpace(input))
+                Console.Beep();
+        } while (string.IsNullOrWhiteSpace(input));
+        _lc.IfFoundContact = "If Found Contact: " + input;
+
+        Console.WriteLine();
+        Console.WriteLine("-------------------------------------------------");
+        //Console.Clear();
+        ShowUserInfo();
+        Console.Write(" Press ENTER to confirm user information.");
+        ConsoleKeyInfo confirm = Console.ReadKey(intercept: true); // 'intercept' prevents input from echoing to screen
+
+        if (confirm.Key == ConsoleKey.Enter) // if confirmed, proceed as if showUserInfo
+        {
+            Console.Clear();
+            ShowUserInfo();
+            Status = AppStatus.ShowUserInfo; 
+        }
+    }
+    //------------------------------------
+    public bool DeleteValue(bool TrueForListFalseForTask)
+    {
+        int Col = 11; // represents the column at which the values begin to be printed
+
+        // print accepted input string and allow user to accept or reject changes
+        Console.SetCursorPosition(0, 0);
+        Console.WriteLine("  ***** Confirm Edits - Press Enter to confirm your changes *****                                                         " +
+            "                                                                                                                  ");
+        Console.SetCursorPosition(Col, SelectionRow);
+        if (TrueForListFalseForTask)
+            Console.Write(_lc[SelectedList].Subject);
+        else
+            Console.Write(_lc[SelectedList][SelectedTask].Task);
+        Console.Write(" <-- Press ENTER to confirm delete");
+        ConsoleKeyInfo confirm = Console.ReadKey(intercept: true); // 'intercept' prevents input from echoing to screen
+
+        if (confirm.Key == ConsoleKey.Enter)
+            return true;
+        return false;
     }
     //------------------------------------
     public void EditValue(bool TrueForListFalseForTask)
@@ -296,14 +418,6 @@ internal class ConsoleUi : IListUiInterface
         }
     }
     //------------------------------------
-    public void EditUserInfo()
-    {
-        Console.WriteLine("edit user info");
-        //dedicated input to edit user info here
-
-        // likely not asynch/threaded
-    }
-    //------------------------------------
     public AppStatus HandleUserInput(AppStatus curStatus) 
     {
         // wait and read input from user
@@ -313,6 +427,39 @@ internal class ConsoleUi : IListUiInterface
 
         switch (curStatus) {
             case AppStatus.ShowLists: // for LISTS //////////////////////////////////
+
+                if (EditSearchString)
+                {
+                    //Console.SetCursorPosition(0, 10 + _lc.Count);
+                    //Console.Write("Search: " + ListSearchString);
+                    //Console.CursorVisible = true;
+                    switch (keyInfo.KeyChar)
+                    {
+                        case >= 'a' and <= 'z':
+                        case >= 'A' and <= 'Z':
+                        case ' ':
+                            ListSearchString += keyInfo.KeyChar;
+                            break;
+                    }
+                    switch (keyInfo.Key)
+                    {
+                        case ConsoleKey.Delete:
+                        case ConsoleKey.Backspace:
+                            if (ListSearchString.Length > 0)
+                                ListSearchString = ListSearchString.Substring(0, ListSearchString.Length - 1);
+                            break;
+                        case ConsoleKey.Enter:
+                            EditSearchString = false;
+                            break;
+                        case ConsoleKey.Escape:
+                            ListSearchString = string.Empty;
+                            EditSearchString = false;
+                            ListSearchOrFilterEnabled = false;
+                            break;
+                    }
+                    break;
+                }
+                // if not editSearchString...
                 switch (keyInfo.Key)
                 {
                     case ConsoleKey.UpArrow:
@@ -349,21 +496,40 @@ internal class ConsoleUi : IListUiInterface
                             SelectedList++; // also increment integer SelectedList 
                         break;
                     case ConsoleKey.Delete:
-                        if (!_lc.DeleteList(SelectedList))
-                            Console.Beep(); // beep if error
+                    case ConsoleKey.Backspace:
+                        if (DeleteValue(TrueForListFalseForTask: true)) // if deletion confirmed
+                        {
+                            if (!_lc.DeleteList(SelectedList)) // attempt to delete row
+                                Console.Beep(); // beep if error
+                            if (SelectedList > 0)
+                                SelectedList--;
+                        }
                         break;
                     case ConsoleKey.S:
-                        // collect search string
-                        // display results instead of regular lists
+                        // turn off filter in order to do search - only one allowed at a time
+                        ListFilter = 0; // clear filter if searching
+                        ListSearchOrFilterEnabled = true;
+                        EditSearchString = true;
                         break;
                     case ConsoleKey.F:
+                        // turn off search in order to do filter - only one allowed at a time
+                        EditSearchString = false;
+                        ListSearchString = String.Empty;
+                        ListSearchOrFilterEnabled = true;
                         // toggle filter setting
-                        // display results instead of regular lists
+                        ListFilter++;
+                        if (ListFilter > 2)
+                        {
+                            ListFilter = 0;
+                            ListSearchOrFilterEnabled = false;
+                        }
                         break;
                     case ConsoleKey.Escape:
                         if (ListSearchOrFilterEnabled)
                         {
                             ListSearchOrFilterEnabled= false;
+                            ListSearchString = String.Empty;
+                            ListFilter = 0;
                             newStatus = AppStatus.ShowLists;
                         }
                         else
@@ -383,6 +549,39 @@ internal class ConsoleUi : IListUiInterface
                 }
                 break;
             case AppStatus.ShowTasks:  // for TASKS //////////////////////////////////
+                if (EditSearchString)
+                {
+                    //Console.SetCursorPosition(0, 10 + _lc.Count);
+                    //Console.Write("Search: " + TaskSearchString);
+                    //Console.CursorVisible = true;
+                    switch (keyInfo.KeyChar)
+                    {
+                        case >= 'a' and <= 'z':
+                        case >= 'A' and <= 'Z':
+                        case ' ':
+                            TaskSearchString += keyInfo.KeyChar;
+                            break;
+                    }
+                    switch (keyInfo.Key)
+                    {
+                        case ConsoleKey.Delete:
+                        case ConsoleKey.Backspace:
+                            if (TaskSearchString.Length > 0)
+                                TaskSearchString = TaskSearchString.Substring(0, TaskSearchString.Length - 1);
+                            break;
+                        case ConsoleKey.Enter:
+                            EditSearchString = false;
+                            break;
+                        case ConsoleKey.Escape:
+                            TaskSearchString = string.Empty;
+                            EditSearchString = false;
+                            TaskSearchOrFilterEnabled = false;
+                            break;
+                    }
+                    break;
+                }
+                // if not editSearchString...
+
                 switch (keyInfo.Key)
                 {
                     case ConsoleKey.UpArrow:
@@ -415,24 +614,40 @@ internal class ConsoleUi : IListUiInterface
                         if (SelectedTask < _lc[SelectedList].Count - 1)
                             SelectedTask++;
                         break;
+                    case ConsoleKey.Backspace:
                     case ConsoleKey.Delete:
-                        _lc[SelectedList].DeleteTask(SelectedTask);
-                        SelectedTask--;
-                        if (SelectedTask < 0)
-                            SelectedTask = 0;
+                        if (DeleteValue(TrueForListFalseForTask: false)) // if deletion confirmed
+                        {
+                            _lc[SelectedList].DeleteTask(SelectedTask);
+                            if (SelectedTask > 0)
+                                SelectedTask--;
+                        }
                         break;
                     case ConsoleKey.S:
-                        // collect search string
-                        // display results instead of regular tasks
+                        // turn off filter in order to do search - only one allowed at a time
+                        TaskFilter = 0; // clear filter if searching
+                        TaskSearchOrFilterEnabled = true;
+                        EditSearchString = true;
                         break;
                     case ConsoleKey.F:
+                        // turn off search in order to do filter - only one allowed at a time
+                        EditSearchString = false;
+                        TaskSearchString = String.Empty;
+                        TaskSearchOrFilterEnabled = true;
                         // toggle filter setting
-                        // display results instead of regular tasks
+                        TaskFilter++;
+                        if (TaskFilter > 2)
+                        {
+                            TaskFilter = 0;
+                            TaskSearchOrFilterEnabled = false;
+                        }
                         break;
                     case ConsoleKey.Escape:
                         if (TaskSearchOrFilterEnabled)
                         {
                             TaskSearchOrFilterEnabled= false;
+                            TaskSearchString = String.Empty;
+                            TaskFilter = 0;
                             newStatus = AppStatus.ShowTasks;
                         }
                         else
@@ -456,6 +671,12 @@ internal class ConsoleUi : IListUiInterface
                 break;
             case AppStatus.ShowSplashScreen: // input read another way in ShowSplashScreen
                 newStatus = AppStatus.ShowLists;
+                break;
+            case AppStatus.ShowUserInfo:
+                if (keyInfo.Key == ConsoleKey.E)
+                    newStatus = AppStatus.EditUserInfo;
+                else
+                    newStatus = AppStatus.ShowLists;
                 break;
             case AppStatus.Loading: // accept no input while in this status
             default:

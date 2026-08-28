@@ -54,15 +54,11 @@ public class ListObject : List<TaskObject>
         LastAccess = DateTime.Now;
     }
     //------------------------------------
-    public List<TaskObject> SearchTasks(string searchText)
+    public List<TaskObject> TaskSearch(string searchText)
     {
         LastAccess = DateTime.Now;
         if (string.IsNullOrWhiteSpace(searchText))
-        {
-            IsTaskSearchFilterActive = false;
             return new List<TaskObject>(this);
-        }
-        IsTaskSearchFilterActive = true;
         return this.FindAll(taskObj =>
             taskObj.Task.Contains(searchText, StringComparison.OrdinalIgnoreCase));
     }
@@ -72,7 +68,7 @@ public class ListObject : List<TaskObject>
         return new List<TaskObject>(this);
     }
     //------------------------------------
-    public List<TaskObject> FilterTasks(int filterType)
+    public List<TaskObject> TaskFilter(int filterType)
     {
         LastAccess = DateTime.Now;
         return filterType switch

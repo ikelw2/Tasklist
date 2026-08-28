@@ -42,9 +42,9 @@ internal class ListContainer : List<ListObject>
         switch (filterType)
         {
             case 1:
-                return this.FindAll(taskObj => !taskObj.IsActive); // inactive lists
+                return this.FindAll(taskObj => taskObj.IsActive); // inactive lists
             case 2:
-                return this.FindAll(taskObj => taskObj.IsActive); // active lists
+                return this.FindAll(taskObj => !taskObj.IsActive); // active lists
             default:
                 break;
         };
